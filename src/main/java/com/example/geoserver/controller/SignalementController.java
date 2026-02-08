@@ -6,7 +6,6 @@ import com.example.geoserver.entity.Signalement;
 import com.example.geoserver.entity.Statut;
 import com.example.geoserver.entity.StatutSignalement;
 import com.example.geoserver.repository.SignalementRepository;
-import com.example.geoserver.repository.StatutRepository;
 import com.example.geoserver.service.SignalementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
