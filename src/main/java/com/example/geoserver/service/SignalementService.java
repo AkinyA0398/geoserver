@@ -67,4 +67,9 @@ public class SignalementService {
 
         return result;
     }
+
+    public List<Signalement> getAllAValider() {
+        return signalementRepository.findAllAValider();
+    }
+
 }
