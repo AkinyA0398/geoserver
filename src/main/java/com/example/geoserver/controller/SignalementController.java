@@ -58,4 +58,17 @@ public class SignalementController {
         }
     }
 
+    @GetMapping("/valide")
+    public ResponseEntity<ApiResponse<List<SignalementDTO>>> getAllValide() {   
+        try {
+            List<Signalement> list = signalementService.getAllValide();
+            List<SignalementDTO> listDTO = list.stream()
+                    .map(SignalementDTO::new)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(new ApiResponse<>(true, listDTO, null));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(new ApiResponse<>(false, null, e.getMessage()));
+        }
+    }
 }
