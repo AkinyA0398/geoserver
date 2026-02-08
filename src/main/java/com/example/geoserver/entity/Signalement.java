@@ -25,6 +25,7 @@ public class Signalement {
 
     private Double surface;
     private Double budget;
+    private Boolean sync = false;
 
     @Column(columnDefinition = "geometry(Point,4326)")
     private Point geom;
