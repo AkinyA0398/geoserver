@@ -35,6 +35,17 @@ public class SignalementController {
         }
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<?> list(
+            @RequestParam(required = false) String idUtilisateur
+    ) {
+        try {
+            return ResponseEntity.ok(signalementService.listSignalements(idUtilisateur));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse<Object>> getStats() { 
         try {
