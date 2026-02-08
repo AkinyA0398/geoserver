@@ -99,4 +99,17 @@ public class SignalementController {
                     .body(new ApiResponse<>(false, null, e.getMessage()));
         }
     }
+
+    @PutMapping("/{id}/statut")
+    public ResponseEntity<ApiResponse<String>> changerStatut(
+            @PathVariable Long id,
+            @RequestParam Long nouveauStatutId) {
+        try {
+            signalementService.changerStatut(id, nouveauStatutId);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Statut changé avec succès", null));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(new ApiResponse<>(false, null, e.getMessage()));
+        }
+    }
 }
