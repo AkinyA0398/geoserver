@@ -17,7 +17,6 @@ public class SignalementDTO {
     private Double surfaceReparee;
     private Double budget;
     private PointDTO geom;
-    private Integer severite;
 
     private UtilisateurDTO utilisateur;
     private EntrepriseDTO entreprise;
@@ -52,13 +51,8 @@ public class SignalementDTO {
 
             this.statutActuel = signalement.getStatutActuel() != null ? 
                         new StatutDTO(signalement.getStatutActuel()) : null;
-            if(statutActuel == null || statutActuel.getId() == 1) {
-                this.surfaceReparee = 0.0; 
-            } else if (statutActuel != null && statutActuel.getId() == 2 ) {
-                this.surfaceReparee = this.surface * 0.5; 
-            } else if (statutActuel != null && statutActuel.getId() == 3) {
-                this.surfaceReparee = this.surface;
-            }
+            this.surfaceReparee = this.statutActuel != null ? 
+                                    this.statutActuel.getAvancement() * this.surface : 0;
         }
     }
 }
