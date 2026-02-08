@@ -71,4 +71,18 @@ public class SignalementController {
                     .body(new ApiResponse<>(false, null, e.getMessage()));
         }
     }
+
+    @GetMapping("/refuse")
+    public ResponseEntity<ApiResponse<List<SignalementDTO>>> getAllRefuse() {
+        try {
+            List<Signalement> list = signalementService.getAllRefuse();
+            List<SignalementDTO> listDTO = list.stream()
+                    .map(SignalementDTO::new)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(new ApiResponse<>(true, listDTO, null));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(new ApiResponse<>(false, null, e.getMessage()));
+        }
+    }
 }
