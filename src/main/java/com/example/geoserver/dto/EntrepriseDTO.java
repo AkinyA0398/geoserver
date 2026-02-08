@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 public class EntrepriseDTO {
     private Long id;
     private String nom;
-    private List<String> utilisateursIds;
     private List<Long> signalementsIds;
 
     public EntrepriseDTO() {}
@@ -18,12 +17,6 @@ public class EntrepriseDTO {
         if (entreprise != null) {
             this.id = entreprise.getId();
             this.nom = entreprise.getNom();
-            
-            if (entreprise.getUtilisateurs() != null) {
-                this.utilisateursIds = entreprise.getUtilisateurs().stream()
-                    .map(utilisateur -> utilisateur.getId())
-                    .collect(Collectors.toList());
-            }
             
             if (entreprise.getSignalements() != null) {
                 this.signalementsIds = entreprise.getSignalements().stream()
