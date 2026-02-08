@@ -1,10 +1,14 @@
 package com.example.geoserver.service;
 
 import com.example.geoserver.entity.Signalement;
+import com.example.geoserver.entity.Statut;
 import com.example.geoserver.entity.StatutSignalement;
 import com.example.geoserver.repository.SignalementRepository;
+import com.example.geoserver.repository.StatutRepository;
+import com.example.geoserver.repository.StatutSignalementRepository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -18,6 +22,12 @@ public class SignalementService {
 
     @Autowired
     private SignalementRepository signalementRepository;
+
+    @Autowired
+    private StatutRepository statutRepository;
+
+    @Autowired
+    private StatutSignalementRepository statutSignalementRepository;
 
     public List<Signalement> getAll() {
         return signalementRepository.findAll();
@@ -39,9 +49,6 @@ public class SignalementService {
             StatutSignalement statutActuel = s.getStatutActuel();
 
             if (statutActuel == null) continue;
-
-            Long statutId = statutActuel.getStatut() != null ? 
-                                statutActuel.getStatut().getId() : 1;
 
             double taux = statutActuel.getStatut() != null ? 
                             statutActuel.getStatut().getAvancement() / 100.0 : 0;

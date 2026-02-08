@@ -13,7 +13,7 @@ public class StatutDTO {
     private String nom;
     private LocalDateTime dateStatut;
     private String commentaire;
-    private Double avancement;
+    private Integer avancement;
 
     public StatutDTO() {}
 
@@ -32,7 +32,8 @@ public class StatutDTO {
                         statutSignalement.getStatut().getNom() : null;
             this.dateStatut = statutSignalement.getDateStatut();
             this.commentaire = statutSignalement.getCommentaire();
-            this.avancement = statutSignalement.getAvancement();
+            this.avancement = statutSignalement.getStatut() != null ? 
+                                statutSignalement.getStatut().getAvancement() : null;
         }
     }
 }
