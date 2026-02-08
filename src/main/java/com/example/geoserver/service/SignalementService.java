@@ -91,4 +91,32 @@ public class SignalementService {
     public double moyenneNouveauVersTermine() {
         return signalementRepository.averageDelayBetweenStatuts(2L, 5L);
     }
+
+    public void changerStatut(Long signalementId, Long nouveauStatutId) throws Exception {
+
+        Signalement signalement = signalementRepository.findById(signalementId)
+                .orElseThrow(() -> new Exception("Signalement introuvable"));
+
+        Statut nouveauStatut = statutRepository.findById(nouveauStatutId)
+                .orElseThrow(() -> new Exception("Statut introuvable"));
+
+        StatutSignalement statutActuel = signalement.getStatutActuel();
+
+        if (statutActuel != null) {
+            int ordreActuel = statutActuel.getStatut().getOrdre();
+            int nouvelOrdre = nouveauStatut.getOrdre();
+            if (nouvelOrdre <= ordreActuel) {
+                throw new Exception(
+                        "Transition de statut invalide"
+                );
+            }
+        }
+
+        StatutSignalement ss = new StatutSignalement();
+        ss.setSignalement(signalement);
+        ss.setStatut(nouveauStatut);
+        ss.setDateStatut(LocalDateTime.now());
+
+        statutSignalementRepository.save(ss);
+    }
 }
