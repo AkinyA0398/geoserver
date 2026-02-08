@@ -79,4 +79,8 @@ public class SignalementService {
     public List<Signalement> getAllRefuse() {
         return signalementRepository.findAllRefuse();
     }
+
+    public double moyenneNouveauVersEnCours() {
+        return signalementRepository.averageDelayBetweenStatuts(2L, 4L);
+    }
 }
