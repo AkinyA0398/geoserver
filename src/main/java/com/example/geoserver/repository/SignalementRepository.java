@@ -47,4 +47,6 @@ public interface SignalementRepository extends JpaRepository<Signalement, Long> 
             @Param("fromStatut") Long fromStatut,
             @Param("toStatut") Long toStatut
     );
+    
+    List<Signalement> findBySyncFalse();
 }

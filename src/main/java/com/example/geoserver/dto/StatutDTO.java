@@ -14,6 +14,7 @@ public class StatutDTO {
     private LocalDateTime dateStatut;
     private String commentaire;
     private Integer avancement;
+    private Integer ordre;
 
     public StatutDTO() {}
 
@@ -34,6 +35,8 @@ public class StatutDTO {
             this.commentaire = statutSignalement.getCommentaire();
             this.avancement = statutSignalement.getStatut() != null ? 
                                 statutSignalement.getStatut().getAvancement() : null;
+            this.ordre = statutSignalement.getStatut() != null ? 
+                                statutSignalement.getStatut().getOrdre() : null;
         }
     }
 }

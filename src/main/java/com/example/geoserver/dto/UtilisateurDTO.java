@@ -8,10 +8,8 @@ public class UtilisateurDTO {
     private String id;
     private String email;
     private String nom;
-    private String photo;
     private Integer attempts;
     private Boolean blocked;
-    private Long entrepriseId;
 
     public UtilisateurDTO() {}
 
