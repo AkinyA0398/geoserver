@@ -8,6 +8,7 @@ import com.example.geoserver.repository.SignalementRepository;
 import com.example.geoserver.repository.StatutRepository;
 import com.example.geoserver.repository.StatutSignalementRepository;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Query;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.firebase.cloud.FirestoreClient;
 
@@ -16,6 +17,7 @@ import jakarta.annotation.PostConstruct;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,6 +43,32 @@ public class SignalementService {
     @PostConstruct
     public void init() throws Exception {
         FirebaseInitializer.getFirebaseApp();
+    }
+    private static final String COLLECTION = "signalements";
+
+    private Firestore db() {
+        return FirestoreClient.getFirestore();
+    }
+
+    public List<Map<String, Object>> listSignalements(String idUtilisateur) throws Exception {
+
+        Query query = db().collection(COLLECTION);
+
+        if (idUtilisateur != null && !idUtilisateur.isBlank()) {
+            query = query.whereEqualTo("utilisateur.id", idUtilisateur);
+        }
+
+        List<QueryDocumentSnapshot> docs = query.get().get().getDocuments();
+
+        List<Map<String, Object>> results = new ArrayList<>();
+
+        for (QueryDocumentSnapshot doc : docs) {
+            Map<String, Object> data = doc.getData();
+            data.put("id", doc.getId());
+            results.add(data);
+        }
+
+        return results;
     }
 
     public List<Signalement> getAll() {
