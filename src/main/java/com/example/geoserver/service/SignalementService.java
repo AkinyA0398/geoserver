@@ -23,9 +23,9 @@ public class SignalementService {
         return signalementRepository.findAll();
     }
 
-     public Map<String, Object> getStats() {
+    public Map<String, Object> getStats() {
 
-        List<Signalement> signalements = signalementRepository.findAll();
+        List<Signalement> signalements = signalementRepository.findAllValide();
 
         int nombrePoints = signalements.size();
         double surfaceTotale = 0, budgetTotal = 0, surfaceReparee = 0;
@@ -43,9 +43,8 @@ public class SignalementService {
             Long statutId = statutActuel.getStatut() != null ? 
                                 statutActuel.getStatut().getId() : 1;
 
-            double taux = statutId == 1 ? 0 :
-                    statutId == 2 ? 0.5 :
-                    statutId == 3 ? 1 : 0;
+            double taux = statutId == 4 ? 0.5 :
+                    statutId == 5 ? 1 : 0;
 
             if (s.getSurface() != null)
                 surfaceReparee += s.getSurface() * taux;
