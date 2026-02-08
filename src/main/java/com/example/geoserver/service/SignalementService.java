@@ -88,4 +88,7 @@ public class SignalementService {
         return signalementRepository.averageDelayBetweenStatuts(4L, 5L);
     }
 
+    public double moyenneNouveauVersTermine() {
+        return signalementRepository.averageDelayBetweenStatuts(2L, 5L);
+    }
 }
