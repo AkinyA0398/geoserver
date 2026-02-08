@@ -114,4 +114,15 @@ public class SignalementController {
                     .body(new ApiResponse<>(false, null, e.getMessage()));
         }
     }
+
+    @PutMapping
+    public ResponseEntity<ApiResponse<String>> creerSignalement(@RequestBody Map<String, Object> payload) {
+        try {
+            String signalementId = signalementService.creerSignalement(payload);
+            return ResponseEntity.ok(new ApiResponse<>(true, signalementId, null));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(new ApiResponse<>(false, null, e.getMessage()));
+        }
+    }
 }
