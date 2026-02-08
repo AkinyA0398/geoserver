@@ -72,4 +72,8 @@ public class SignalementService {
         return signalementRepository.findAllAValider();
     }
 
+    public List<Signalement> getAllValide() {
+        return signalementRepository.findAllValide();
+    }
+
 }
