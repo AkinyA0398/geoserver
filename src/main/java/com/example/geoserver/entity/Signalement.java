@@ -29,9 +29,6 @@ public class Signalement {
     @Column(columnDefinition = "geometry(Point,4326)")
     private Point geom;
 
-    @Column(name = "severite")
-    private Integer severite = 1;
-
     @ManyToOne
     @JoinColumn(name = "id_utilisateur")
     private Utilisateur utilisateur;
