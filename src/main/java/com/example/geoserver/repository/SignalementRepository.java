@@ -23,3 +23,11 @@ public interface SignalementRepository extends JpaRepository<Signalement, Long> 
            "   SELECT MAX(st2.dateStatut) FROM StatutSignalement st2 WHERE st2.signalement = s" +
            ") AND st.statut.id = 1")
     List<Signalement> findAllAValider();
+
+    @Query("SELECT s FROM Signalement s " +
+           "JOIN s.statuts st " +
+           "WHERE st.dateStatut = (" +
+           "   SELECT MAX(st2.dateStatut) FROM StatutSignalement st2 WHERE st2.signalement = s" +
+           ") AND st.statut.id = 2")
+    List<Signalement> findAllRefuse();   
+}
