@@ -76,4 +76,7 @@ public class SignalementService {
         return signalementRepository.findAllValide();
     }
 
+    public List<Signalement> getAllRefuse() {
+        return signalementRepository.findAllRefuse();
+    }
 }
