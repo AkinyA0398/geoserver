@@ -43,8 +43,8 @@ public class SignalementService {
             Long statutId = statutActuel.getStatut() != null ? 
                                 statutActuel.getStatut().getId() : 1;
 
-            double taux = statutId == 4 ? 0.5 :
-                    statutId == 5 ? 1 : 0;
+            double taux = statutActuel.getStatut() != null ? 
+                            statutActuel.getStatut().getAvancement() / 100.0 : 0;
 
             if (s.getSurface() != null)
                 surfaceReparee += s.getSurface() * taux;

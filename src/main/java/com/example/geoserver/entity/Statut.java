@@ -13,4 +13,8 @@ public class Statut {
     
     @Column(unique = true, nullable = false)
     private String nom;
+
+    private Integer avancement = 0; 
+
+    private Integer ordre = 0;
 }
