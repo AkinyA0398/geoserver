@@ -29,9 +29,6 @@ public class Signalement {
     @Column(columnDefinition = "geometry(Point,4326)")
     private Point geom;
 
-    @Column(name = "severite")
-    private Integer severite = 1;
-
     @ManyToOne
     @JoinColumn(name = "id_utilisateur")
     private Utilisateur utilisateur;
@@ -43,9 +40,6 @@ public class Signalement {
     @ManyToOne
     @JoinColumn(name = "id_type_signalement")
     private TypeSignalement typeSignalement;
-
-    @OneToMany(mappedBy = "signalement", cascade = CascadeType.ALL)
-    private List<Avancement> avancements;
 
     @OneToMany(mappedBy = "signalement", cascade = CascadeType.ALL)
     private List<StatutSignalement> statuts;

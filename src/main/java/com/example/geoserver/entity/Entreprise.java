@@ -16,8 +16,5 @@ public class Entreprise {
     private String nom;
     
     @OneToMany(mappedBy = "entreprise")
-    private List<Utilisateur> utilisateurs;
-    
-    @OneToMany(mappedBy = "entreprise")
     private List<Signalement> signalements;
 }

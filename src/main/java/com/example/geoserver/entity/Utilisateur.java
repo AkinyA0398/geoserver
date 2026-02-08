@@ -20,14 +20,7 @@ public class Utilisateur {
     @Column(nullable = false)
     private String nom;
     
-    private String photo;
-    
-    @Column(name = "failed_attempts")
-    private Integer failedAttempts = 0;
+    private Integer attempts = 0;
     
     private Boolean blocked = false;
-    
-    @ManyToOne
-    @JoinColumn(name = "id_entreprise")
-    private Entreprise entreprise;
 }
