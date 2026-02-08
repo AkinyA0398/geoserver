@@ -23,7 +23,6 @@ public class StatutDTO {
         }
     }
 
-    
     public StatutDTO(StatutSignalement statutSignalement) {
         if (statutSignalement != null) {
             this.id = statutSignalement.getStatut() != null ? 
