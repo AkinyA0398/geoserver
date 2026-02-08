@@ -85,4 +85,18 @@ public class SignalementController {
                     .body(new ApiResponse<>(false, null, e.getMessage()));
         }
     }
+
+    @GetMapping("/stats/average-delay")
+    public ResponseEntity<ApiResponse<Map<String, Double>>> getAverageDelay() {
+        try {
+            Map<String, Double> delays = new HashMap<>();
+            delays.put("nouveauVersEnCours", signalementService.moyenneNouveauVersEnCours());
+            delays.put("enCoursVersTermine", signalementService.moyenneEnCoursVersTermine());
+            delays.put("nouveauVersTermine", signalementService.moyenneNouveauVersTermine());
+            return ResponseEntity.ok(new ApiResponse<>(true, delays, null));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(new ApiResponse<>(false, null, e.getMessage()));
+        }
+    }
 }
