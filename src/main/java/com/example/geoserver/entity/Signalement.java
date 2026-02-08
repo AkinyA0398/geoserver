@@ -42,9 +42,6 @@ public class Signalement {
     private TypeSignalement typeSignalement;
 
     @OneToMany(mappedBy = "signalement", cascade = CascadeType.ALL)
-    private List<Avancement> avancements;
-
-    @OneToMany(mappedBy = "signalement", cascade = CascadeType.ALL)
     private List<StatutSignalement> statuts;
 
     public StatutSignalement getStatutActuel() {
