@@ -43,8 +43,8 @@ public class SignalementService {
             Long statutId = statutActuel.getStatut() != null ? 
                                 statutActuel.getStatut().getId() : 1;
 
-            double taux = statutId == 4 ? 0.5 :
-                    statutId == 5 ? 1 : 0;
+            double taux = statutActuel.getStatut() != null ? 
+                            statutActuel.getStatut().getAvancement() / 100.0 : 0;
 
             if (s.getSurface() != null)
                 surfaceReparee += s.getSurface() * taux;
@@ -78,5 +78,17 @@ public class SignalementService {
 
     public List<Signalement> getAllRefuse() {
         return signalementRepository.findAllRefuse();
+    }
+
+    public double moyenneNouveauVersEnCours() {
+        return signalementRepository.averageDelayBetweenStatuts(2L, 4L);
+    }
+
+    public double moyenneEnCoursVersTermine() {
+        return signalementRepository.averageDelayBetweenStatuts(4L, 5L);
+    }
+
+    public double moyenneNouveauVersTermine() {
+        return signalementRepository.averageDelayBetweenStatuts(2L, 5L);
     }
 }
