@@ -4,9 +4,12 @@ import com.example.geoserver.dto.ApiResponse;
 import com.example.geoserver.dto.SignalementDTO;
 import com.example.geoserver.entity.Signalement;
 import com.example.geoserver.service.SignalementService;
+import com.example.geoserver.util.ImageCompressor;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -127,9 +130,9 @@ public class SignalementController {
     }
 
     @PutMapping
-    public ResponseEntity<ApiResponse<String>> creerSignalement(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<ApiResponse<String>> creerSignalement(@RequestBody Map<String, Object> payload, @RequestParam("photos") List<MultipartFile> photos) {
         try {
-            String signalementId = signalementService.creerSignalement(payload);
+            String signalementId = signalementService.creerSignalement(payload, ImageCompressor.multipartFilesToBytes(photos));
             return ResponseEntity.ok(new ApiResponse<>(true, signalementId, null));
         } catch (Exception e) {
             return ResponseEntity.internalServerError()

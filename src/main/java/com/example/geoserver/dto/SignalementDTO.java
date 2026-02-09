@@ -1,9 +1,11 @@
 package com.example.geoserver.dto;
 
 import com.example.geoserver.entity.Signalement;
+import com.example.geoserver.entity.SignalementPhoto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,6 +25,7 @@ public class SignalementDTO {
     private TypeSignalementDTO typeSignalement;
     private List<StatutDTO> statuts;
     private StatutDTO statutActuel;
+    private List<byte[]> photos;
 
     public SignalementDTO() {
     }
@@ -36,12 +39,13 @@ public class SignalementDTO {
             this.budget = signalement.getBudget();
             this.geom = new PointDTO(signalement.getGeom());
 
-            this.utilisateur = signalement.getUtilisateur() != null ? 
-                                new UtilisateurDTO(signalement.getUtilisateur()) : null;
-            this.entreprise = signalement.getEntreprise() != null ? 
-                                new EntrepriseDTO(signalement.getEntreprise()) : null;
+            this.utilisateur = signalement.getUtilisateur() != null ? new UtilisateurDTO(signalement.getUtilisateur())
+                    : null;
+            this.entreprise = signalement.getEntreprise() != null ? new EntrepriseDTO(signalement.getEntreprise())
+                    : null;
             this.typeSignalement = signalement.getTypeSignalement() != null
-                    ? new TypeSignalementDTO(signalement.getTypeSignalement()) : null;
+                    ? new TypeSignalementDTO(signalement.getTypeSignalement())
+                    : null;
 
             if (signalement.getStatuts() != null) {
                 this.statuts = signalement.getStatuts().stream()
@@ -49,10 +53,13 @@ public class SignalementDTO {
                         .collect(Collectors.toList());
             }
 
-            this.statutActuel = signalement.getStatutActuel() != null ? 
-                        new StatutDTO(signalement.getStatutActuel()) : null;
-            this.surfaceReparee = this.statutActuel != null ? 
-                                    this.statutActuel.getAvancement() * this.surface : 0;
+            this.statutActuel = signalement.getStatutActuel() != null ? new StatutDTO(signalement.getStatutActuel())
+                    : null;
+            this.surfaceReparee = this.statutActuel != null ? this.statutActuel.getAvancement() * this.surface : 0;
+            this.photos = signalement.getPhotos() != null
+                    ? signalement.getPhotos().stream()
+                            .map(SignalementPhoto::getPhoto).toList()
+                                : new ArrayList<>();
         }
     }
 }
