@@ -288,8 +288,43 @@ public class SignalementService {
         });
     }
 
-    private void createPostgresFromFirestore(QueryDocumentSnapshot fsDoc) {
+    private void sendNotification(String email) {
+        try {
+            if (email == null)
+                return;
 
+            Firestore db = FirestoreClient.getFirestore();
+
+            QuerySnapshot snap = db.collection("users")
+                    .whereEqualTo("email", email)
+                    .limit(1)
+                    .get()
+                    .get();
+
+            if (snap.isEmpty())
+                return;
+
+            String token = snap.getDocuments().get(0).getString("fcmToken");
+            if (token == null)
+                return;
+
+            Message message = Message.builder()
+                    .setToken(token)
+                    .setNotification(Notification.builder()
+                            .setTitle("Statut du signalement mis à jour")
+                            .setBody("Le statut de votre signalement a été modifié")
+                            .build())
+                    .putData("type", "SIGNALMENT_STATUS")
+                    .build();
+
+            FirebaseMessaging.getInstance().send(message);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     private void createPostgresFromFirestore(QueryDocumentSnapshot fsDoc) throws Exception {
         Signalement s = new Signalement();
         s.setDescription(fsDoc.getString("description"));
