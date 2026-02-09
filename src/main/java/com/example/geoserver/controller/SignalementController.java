@@ -5,6 +5,7 @@ import com.example.geoserver.dto.SignalementDTO;
 import com.example.geoserver.entity.Signalement;
 import com.example.geoserver.service.SignalementService;
 import com.example.geoserver.util.ImageCompressor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,9 @@ public class SignalementController {
     @Autowired
     private SignalementService signalementService;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @GetMapping
     public ResponseEntity<ApiResponse<List<SignalementDTO>>> getAllSignalements() {
         try {
@@ -40,8 +44,7 @@ public class SignalementController {
 
     @GetMapping("/firebase")
     public ResponseEntity<?> list(
-            @RequestParam(required = false) String idUtilisateur
-    ) {
+            @RequestParam(required = false) String idUtilisateur) {
         try {
             return ResponseEntity.ok(signalementService.listSignalements(idUtilisateur));
         } catch (Exception e) {
@@ -50,7 +53,7 @@ public class SignalementController {
     }
 
     @GetMapping("/stats")
-    public ResponseEntity<ApiResponse<Object>> getStats() { 
+    public ResponseEntity<ApiResponse<Object>> getStats() {
         try {
             Object stats = signalementService.getStats();
             return ResponseEntity.ok(new ApiResponse<>(true, stats, null));
@@ -75,7 +78,7 @@ public class SignalementController {
     }
 
     @GetMapping("/valide")
-    public ResponseEntity<ApiResponse<List<SignalementDTO>>> getAllValide() {   
+    public ResponseEntity<ApiResponse<List<SignalementDTO>>> getAllValide() {
         try {
             List<Signalement> list = signalementService.getAllValide();
             List<SignalementDTO> listDTO = list.stream()
@@ -129,11 +132,20 @@ public class SignalementController {
         }
     }
 
-    @PutMapping
-    public ResponseEntity<ApiResponse<String>> creerSignalement(@RequestBody Map<String, Object> payload, @RequestParam("photos") List<MultipartFile> photos) {
+    @SuppressWarnings("unchecked")
+    @PutMapping(consumes = "multipart/form-data")
+    public ResponseEntity<ApiResponse<String>> creerSignalement(
+            @RequestPart("payload") String payloadJson,
+            @RequestPart(value = "photos", required = false) List<MultipartFile> photos) {
         try {
-            String signalementId = signalementService.creerSignalement(payload, ImageCompressor.multipartFilesToBytes(photos));
+            Map<String, Object> payload = objectMapper.readValue(payloadJson, Map.class);
+
+            String signalementId = signalementService.creerSignalement(
+                    payload,
+                    ImageCompressor.multipartFilesToBytes(photos));
+
             return ResponseEntity.ok(new ApiResponse<>(true, signalementId, null));
+
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
                     .body(new ApiResponse<>(false, null, e.getMessage()));

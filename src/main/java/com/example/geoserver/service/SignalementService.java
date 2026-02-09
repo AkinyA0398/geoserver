@@ -110,11 +110,14 @@ public class SignalementService {
 
         for (Signalement s : signalements) {
 
-            if (s.getSurface() != null) surfaceTotale += s.getSurface();
-            if (s.getBudget() != null) budgetTotal += s.getBudget();
+            if (s.getSurface() != null)
+                surfaceTotale += s.getSurface();
+            if (s.getBudget() != null)
+                budgetTotal += s.getBudget();
             StatutSignalement statutActuel = s.getStatutActuel();
 
-            if (statutActuel == null) continue;
+            if (statutActuel == null)
+                continue;
 
             double taux = statutActuel.getStatut() != null ? statutActuel.getStatut().getAvancement() / 100.0 : 0;
 
@@ -196,6 +199,32 @@ public class SignalementService {
 
         Firestore db = FirestoreClient.getFirestore();
 
+        String emailUtilisateur = ((Map<String, Object>) payload.get("utilisateur")).get("email").toString();
+        Long entrepriseId = ((Number) ((Map<String, Object>) payload.get("entreprise")).get("id")).longValue();
+        Map<String, Object> typeSignalement = (Map<String, Object>) payload.get("typeSignalement");
+
+        QuerySnapshot userSnap = db.collection("users")
+                .whereEqualTo("email", emailUtilisateur)
+                .limit(1)
+                .get()
+                .get();
+
+        if (userSnap.isEmpty()) {
+            throw new Exception("Utilisateur introuvable avec email: " + emailUtilisateur);
+        }
+        Map<String, Object> utilisateurFirestore = userSnap.getDocuments().get(0).getData();
+
+        QuerySnapshot entrepriseSnap = db.collection("entreprises")
+                .whereEqualTo("id", entrepriseId)
+                .limit(1)
+                .get()
+                .get();
+
+        if (entrepriseSnap.isEmpty()) {
+            throw new Exception("Entreprise introuvable avec ID: " + entrepriseId);
+        }
+        Map<String, Object> entrepriseFirestore = entrepriseSnap.getDocuments().get(0).getData();
+
         String signalementId = UUID.randomUUID().toString();
 
         Map<String, Object> data = new HashMap<>();
@@ -209,13 +238,9 @@ public class SignalementService {
         geom.put("longitude", payload.get("longitude"));
         data.put("geom", geom);
 
-        Map<String, Object> utilisateur = (Map<String, Object>) payload.get("utilisateur");
-        Map<String, Object> entreprise = (Map<String, Object>) payload.get("entreprise");
-        Map<String, Object> typeSignalement = (Map<String, Object>) payload.get("typeSignalement");
-
-        data.put("utilisateur", utilisateur);
-        data.put("entreprise", entreprise);
-        data.put("typeSignalement", typeSignalement);
+        data.put("utilisateur", utilisateurFirestore);
+        data.put("entreprise", entrepriseFirestore);
+        data.put("typeSignalement", typeSignalement); 
 
         Map<String, Object> statutActuel = new HashMap<>();
         statutActuel.put("id", 2L);
@@ -236,10 +261,7 @@ public class SignalementService {
 
         data.put("sync", false);
 
-        db.collection("signalements")
-                .document(signalementId)
-                .set(data)
-                .get();
+        db.collection("signalements").document(signalementId).set(data).get();
 
         return signalementId;
     }
@@ -291,8 +313,7 @@ public class SignalementService {
         });
         return Map.of(
                 "firebaseToPostgres", firebaseToPostgres,
-                "postgresToFirebase", postgresToFirebase
-        );
+                "postgresToFirebase", postgresToFirebase);
     }
 
     private void sendNotification(String email) {
@@ -343,11 +364,11 @@ public class SignalementService {
                         .toLocalDateTime());
 
         Map<String, Object> utilisateurMap = (Map<String, Object>) fsDoc.get("utilisateur");
-        if (utilisateurMap != null && utilisateurMap.get("id") != null) {
-            String utilisateurId = utilisateurMap.get("id").toString();
+        if (utilisateurMap != null && utilisateurMap.get("email") != null) {
+            String email = utilisateurMap.get("email").toString();
             s.setUtilisateur(
-                    utilisateurRepository.findById(utilisateurId)
-                            .orElseThrow(() -> new Exception("Utilisateur introuvable avec ID: " + utilisateurId)));
+                    utilisateurRepository.findByEmail(email)
+                            .orElseThrow(() -> new Exception("Utilisateur introuvable avec email: " + email)));
         }
 
         Map<String, Object> entrepriseMap = (Map<String, Object>) fsDoc.get("entreprise");
