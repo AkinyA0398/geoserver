@@ -2,15 +2,25 @@ package com.example.geoserver.service;
 
 import com.example.geoserver.config.FirebaseInitializer;
 import com.example.geoserver.entity.Signalement;
+import com.example.geoserver.entity.SignalementPhoto;
 import com.example.geoserver.entity.Statut;
 import com.example.geoserver.entity.StatutSignalement;
 import com.example.geoserver.repository.SignalementRepository;
 import com.example.geoserver.repository.StatutRepository;
 import com.example.geoserver.repository.StatutSignalementRepository;
+import com.example.geoserver.repository.UtilisateurRepository;
+import com.example.geoserver.util.ImageCompressor;
+import com.example.geoserver.repository.EntrepriseRepository;
+import com.example.geoserver.repository.SignalementPhotoRepository;
+import com.example.geoserver.repository.TypeSignalementRepository;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Query;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.QuerySnapshot;
 import com.google.firebase.cloud.FirestoreClient;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.Message;
+import com.google.firebase.messaging.Notification;
 
 import jakarta.annotation.PostConstruct;
 
@@ -18,6 +28,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,10 +51,23 @@ public class SignalementService {
     @Autowired
     private StatutSignalementRepository statutSignalementRepository;
 
+    @Autowired
+    private UtilisateurRepository utilisateurRepository;
+
+    @Autowired
+    private EntrepriseRepository entrepriseRepository;
+
+    @Autowired
+    private TypeSignalementRepository typeSignalementRepository;
+
+    @Autowired
+    private SignalementPhotoRepository signalementPhotoRepository;
+
     @PostConstruct
     public void init() throws Exception {
         FirebaseInitializer.getFirebaseApp();
     }
+
     private static final String COLLECTION = "signalements";
 
     private Firestore db() {
@@ -92,19 +116,16 @@ public class SignalementService {
 
             if (statutActuel == null) continue;
 
-            double taux = statutActuel.getStatut() != null ? 
-                            statutActuel.getStatut().getAvancement() / 100.0 : 0;
+            double taux = statutActuel.getStatut() != null ? statutActuel.getStatut().getAvancement() / 100.0 : 0;
 
             if (s.getSurface() != null)
                 surfaceReparee += s.getSurface() * taux;
 
-            String nomStatut = statutActuel.getStatut() != null ? 
-                                statutActuel.getStatut().getNom() : "Inconnu";
+            String nomStatut = statutActuel.getStatut() != null ? statutActuel.getStatut().getNom() : "Inconnu";
             repartitionParStatut.merge(nomStatut, 1, Integer::sum);
         }
 
-        double avancementGlobal = surfaceTotale == 0 ? 0 : 
-                                    (surfaceReparee / surfaceTotale) * 100;
+        double avancementGlobal = surfaceTotale == 0 ? 0 : (surfaceReparee / surfaceTotale) * 100;
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("miseAJour", LocalDate.now());
@@ -155,9 +176,7 @@ public class SignalementService {
             int ordreActuel = statutActuel.getStatut().getOrdre();
             int nouvelOrdre = nouveauStatut.getOrdre();
             if (nouvelOrdre <= ordreActuel) {
-                throw new Exception(
-                        "Transition de statut invalide"
-                );
+                throw new Exception("Transition de statut invalide");
             }
         }
 
@@ -167,9 +186,13 @@ public class SignalementService {
         ss.setDateStatut(LocalDateTime.now());
 
         statutSignalementRepository.save(ss);
+
+        signalement.setSync(false);
+        signalementRepository.save(signalement);
     }
 
-    public String creerSignalement(Map<String, Object> payload) throws Exception {
+    @SuppressWarnings("unchecked")
+    public String creerSignalement(Map<String, Object> payload, List<byte[]> photos) throws Exception {
 
         Firestore db = FirestoreClient.getFirestore();
 
@@ -181,14 +204,35 @@ public class SignalementService {
         data.put("budget", payload.get("budget"));
         data.put("dateCreation", Instant.now());
 
-        Map<String, Object> geo = new HashMap<>();
-        geo.put("latitude", payload.get("latitude"));
-        geo.put("longitude", payload.get("longitude"));
-        data.put("geom", geo);
+        Map<String, Object> geom = new HashMap<>();
+        geom.put("latitude", payload.get("latitude"));
+        geom.put("longitude", payload.get("longitude"));
+        data.put("geom", geom);
 
-         data.put("utilisateurId", payload.get("utilisateurId"));
-        data.put("entrepriseId", payload.get("entrepriseId"));
-        data.put("typeSignalementId", payload.get("typeSignalementId"));
+        Map<String, Object> utilisateur = (Map<String, Object>) payload.get("utilisateur");
+        Map<String, Object> entreprise = (Map<String, Object>) payload.get("entreprise");
+        Map<String, Object> typeSignalement = (Map<String, Object>) payload.get("typeSignalement");
+
+        data.put("utilisateur", utilisateur);
+        data.put("entreprise", entreprise);
+        data.put("typeSignalement", typeSignalement);
+
+        Map<String, Object> statutActuel = new HashMap<>();
+        statutActuel.put("id", 2L);
+        statutActuel.put("nom", "Nouveau");
+        statutActuel.put("ordre", 1);
+        statutActuel.put("avancement", 0);
+        statutActuel.put("dateStatut", Instant.now());
+        data.put("statutActuel", statutActuel);
+
+        List<String> photosBase64 = new ArrayList<>();
+        if (photos != null) {
+            for (byte[] photo : photos) {
+                byte[] resized = ImageCompressor.resizeAndCompressImage(photo);
+                photosBase64.add(Base64.getEncoder().encodeToString(resized));
+            }
+        }
+        data.put("photos", photosBase64);
 
         data.put("sync", false);
 
@@ -204,8 +248,7 @@ public class SignalementService {
 
         Firestore db = FirestoreClient.getFirestore();
 
-        List<QueryDocumentSnapshot> firestoreDocs =
-                db.collection("signalements").get().get().getDocuments();
+        List<QueryDocumentSnapshot> firestoreDocs = db.collection("signalements").get().get().getDocuments();
 
         for (QueryDocumentSnapshot fsDoc : firestoreDocs) {
 
@@ -231,6 +274,10 @@ public class SignalementService {
             Boolean pgSync = pg.getSync();
 
             if (Boolean.FALSE.equals(pgSync) && Boolean.FALSE.equals(fsSync)) {
+                if (fsDoc.getLong("statutActuel.id") != null && pg.getStatutActuel() != null
+                        && !fsDoc.getLong("statutActuel.id").equals(pg.getStatutActuel().getStatut().getId())) {
+                    sendNotification(pg.getUtilisateur() != null ? pg.getUtilisateur().getEmail() : null);
+                }
                 updateFirestoreFromPostgres(pg, fsDoc.getId());
             }
         }
@@ -243,6 +290,7 @@ public class SignalementService {
 
     private void createPostgresFromFirestore(QueryDocumentSnapshot fsDoc) {
 
+    private void createPostgresFromFirestore(QueryDocumentSnapshot fsDoc) throws Exception {
         Signalement s = new Signalement();
         s.setDescription(fsDoc.getString("description"));
         s.setSurface(fsDoc.getDouble("surface"));
@@ -250,19 +298,68 @@ public class SignalementService {
         s.setDateCreation(
                 fsDoc.getTimestamp("dateCreation").toDate().toInstant()
                         .atZone(java.time.ZoneId.systemDefault())
-                        .toLocalDateTime()
-        );
+                        .toLocalDateTime());
+
+        Map<String, Object> utilisateurMap = (Map<String, Object>) fsDoc.get("utilisateur");
+        if (utilisateurMap != null && utilisateurMap.get("id") != null) {
+            String utilisateurId = utilisateurMap.get("id").toString();
+            s.setUtilisateur(
+                    utilisateurRepository.findById(utilisateurId)
+                            .orElseThrow(() -> new Exception("Utilisateur introuvable avec ID: " + utilisateurId)));
+        }
+
+        Map<String, Object> entrepriseMap = (Map<String, Object>) fsDoc.get("entreprise");
+        if (entrepriseMap != null && entrepriseMap.get("id") != null) {
+            Long entrepriseId = ((Number) entrepriseMap.get("id")).longValue();
+            s.setEntreprise(
+                    entrepriseRepository.findById(entrepriseId)
+                            .orElseThrow(() -> new Exception("Entreprise introuvable avec ID: " + entrepriseId)));
+        }
+
+        Map<String, Object> typeMap = (Map<String, Object>) fsDoc.get("typeSignalement");
+        if (typeMap != null && typeMap.get("id") != null) {
+            Long typeId = ((Number) typeMap.get("id")).longValue();
+            s.setTypeSignalement(
+                    typeSignalementRepository.findById(typeId)
+                            .orElseThrow(() -> new Exception("TypeSignalement introuvable avec ID: " + typeId)));
+        }
+
         s.setSync(true);
 
         Signalement saved = signalementRepository.save(s);
+
+        Map<String, Object> statutMap = (Map<String, Object>) fsDoc.get("statutActuel");
+        if (statutMap != null && statutMap.get("id") != null) {
+            Long statutId = ((Number) statutMap.get("id")).longValue();
+            Statut statut = statutRepository.findById(statutId)
+                    .orElseThrow(() -> new Exception("Statut introuvable avec ID: " + statutId));
+
+            StatutSignalement ss = new StatutSignalement();
+            ss.setSignalement(saved);
+            ss.setStatut(statut);
+
+            Instant statutInstant = (Instant) statutMap.get("dateStatut");
+            ss.setDateStatut(LocalDateTime.ofInstant(statutInstant, java.time.ZoneId.systemDefault()));
+
+            statutSignalementRepository.save(ss);
+        }
+
+        List<String> photosBase64 = (List<String>) fsDoc.get("photos");
+        if (photosBase64 != null) {
+            for (String b64 : photosBase64) {
+                SignalementPhoto sp = new SignalementPhoto();
+                sp.setSignalement(saved);
+                sp.setPhoto(Base64.getDecoder().decode(b64));
+                signalementPhotoRepository.save(sp);
+            }
+        }
 
         FirestoreClient.getFirestore()
                 .collection("signalements")
                 .document(fsDoc.getId())
                 .update(Map.of(
                         "postgresId", saved.getId(),
-                        "sync", true
-                ));
+                        "sync", true));
     }
 
     private void updateFirestoreFromPostgres(Signalement pg, String firestoreId) {
@@ -273,6 +370,20 @@ public class SignalementService {
         data.put("budget", pg.getBudget());
         data.put("dateCreation", pg.getDateCreation());
         data.put("sync", true);
+
+        StatutSignalement statutActuel = pg.getStatutActuel();
+        if (statutActuel != null) {
+            Map<String, Object> statutMap = new HashMap<>();
+            statutMap.put("id", statutActuel.getStatut().getId());
+            statutMap.put("nom", statutActuel.getStatut().getNom());
+            statutMap.put("ordre", statutActuel.getStatut().getOrdre());
+            statutMap.put("avancement",
+                    statutActuel.getStatut().getAvancement());
+            statutMap.put("dateStatut",
+                    statutActuel.getDateStatut());
+
+            data.put("statutActuel", statutMap);
+        }
 
         FirestoreClient.getFirestore()
                 .collection("signalements")
