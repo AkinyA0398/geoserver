@@ -38,7 +38,7 @@ public class SignalementController {
         }
     }
 
-    @GetMapping("/search")
+    @GetMapping("/firebase")
     public ResponseEntity<?> list(
             @RequestParam(required = false) String idUtilisateur
     ) {
