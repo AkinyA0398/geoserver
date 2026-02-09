@@ -244,8 +244,8 @@ public class SignalementService {
         return signalementId;
     }
 
-    public void syncSignalements() throws Exception {
-
+    public Map<String, Object> syncSignalements() throws Exception {
+        int firebaseToPostgres = 0, postgresToFirebase = 0;
         Firestore db = FirestoreClient.getFirestore();
 
         List<QueryDocumentSnapshot> firestoreDocs = db.collection("signalements").get().get().getDocuments();
@@ -259,6 +259,7 @@ public class SignalementService {
             Boolean fsSync = fsDoc.getBoolean("sync");
 
             if (postgresId == null) {
+                firebaseToPostgres++;
                 createPostgresFromFirestore(fsDoc);
                 continue;
             }
@@ -266,6 +267,7 @@ public class SignalementService {
             Optional<Signalement> optPg = signalementRepository.findById(postgresId);
 
             if (optPg.isEmpty()) {
+                firebaseToPostgres++;
                 createPostgresFromFirestore(fsDoc);
                 continue;
             }
@@ -274,6 +276,7 @@ public class SignalementService {
             Boolean pgSync = pg.getSync();
 
             if (Boolean.FALSE.equals(pgSync) && Boolean.FALSE.equals(fsSync)) {
+                postgresToFirebase++;
                 if (fsDoc.getLong("statutActuel.id") != null && pg.getStatutActuel() != null
                         && !fsDoc.getLong("statutActuel.id").equals(pg.getStatutActuel().getStatut().getId())) {
                     sendNotification(pg.getUtilisateur() != null ? pg.getUtilisateur().getEmail() : null);
@@ -286,6 +289,10 @@ public class SignalementService {
             s.setSync(true);
             signalementRepository.save(s);
         });
+        return Map.of(
+                "firebaseToPostgres", firebaseToPostgres,
+                "postgresToFirebase", postgresToFirebase
+        );
     }
 
     private void sendNotification(String email) {

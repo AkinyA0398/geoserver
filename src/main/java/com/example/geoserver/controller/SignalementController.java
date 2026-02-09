@@ -139,4 +139,15 @@ public class SignalementController {
                     .body(new ApiResponse<>(false, null, e.getMessage()));
         }
     }
+
+    @PostMapping("/sync")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> syncSignalements() {
+        try {
+            Map<String, Object> result = signalementService.syncSignalements();
+            return ResponseEntity.ok(new ApiResponse<>(true, result, null));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(new ApiResponse<>(false, null, e.getMessage()));
+        }
+    }
 }
